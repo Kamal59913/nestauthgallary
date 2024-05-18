@@ -30,8 +30,10 @@ export class UsersController {
 @Post('login')
 async signIn(@Res() response: any, @Body() signInUserDTO: SignInUserDTO) {
 try {
- const {retrivedUser, token} = await this.userService.signIn(signInUserDTO);
- response.cookie('token', token, { httpOnly: true });
+ const {retrivedUser, accessToken, refreshToken} = await this.userService.signIn(signInUserDTO);
+ response.cookie('accessToken', accessToken, { httpOnly: true });
+ response.cookie('refreshToken', refreshToken, { httpOnly: true });
+
  return response.status(HttpStatus.CREATED).json({
  message: 'User has logged in successfully',
  retrivedUser,});
@@ -46,7 +48,8 @@ try {
 
 @Post('logout')
 async signOut(@Res() response: any) {
-  response.clearCookie('token');
+  response.clearCookie('accessToken');
+  response.clearCookie('refreshToken');
   return response.json({
     message: 'successfully logged out the user'
   })
@@ -172,6 +175,31 @@ async replaceEmailById(@Res() response: any, @Param('id') id: string, @Body('ema
     message: "Error occured changing the email"
    }) 
   }
+  }
+
+@Post('refresh-token') 
+async refreshTheToken(@Req() request: any, @Res() response: any){
+  try {
+    const cookies = request.cookies;
+    const refresh_token = cookies.refreshToken;
+ 
+    const { accessToken, refreshToken} = await this.userService.refreshTheToken(refresh_token);
+    response.cookie('accessToken', accessToken, { httpOnly: true });
+    response.cookie('refreshToken', refreshToken, { httpOnly: true });
+
+    return response.status(HttpStatus.CREATED).json({
+      message: 'Tokens are successfully refreshed',
+      'accessToken': accessToken,
+      'refreshToken': refreshToken
+    });
+  } catch (error) {
+    return response.status(HttpStatus.BAD_REQUEST).json({
+      statusCode: 400,
+      message: 'Unable to refresh the token',
+      error: 'Bad Request'
+     });
+  }
+
   }
 }
 

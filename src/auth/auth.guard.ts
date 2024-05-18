@@ -13,12 +13,12 @@ import { Model } from 'mongoose';
         async canActivate(context: ExecutionContext): Promise<boolean> {
           try {
             const request = context.switchToHttp().getRequest();
-            const token = request.cookies?.token || request.header("Authorization")?.replace("Bearer", "");
-            console.log("token", token)
-            if (!token) {
+            const accessToken = request.cookies?.accessToken || request.header("Authorization")?.replace("Bearer", "");
+
+            if (!accessToken) {
               throw new UnauthorizedException('Please provide token');
             }
-            const resp = await this.authService.validateToken(token);
+            const resp = await this.authService.validateToken(accessToken);
             const userId = resp.id
             const findUser = await this.userModel.findById(userId).select("-password").exec()
 

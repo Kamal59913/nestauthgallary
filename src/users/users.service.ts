@@ -1,5 +1,5 @@
 import { Model } from 'mongoose';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { User, UserDocument } from 'src/schemas/users.schema';
 import { Image, ImageDocument } from 'src/schemas/postImages.schema';
@@ -8,6 +8,7 @@ import { SignInUserDTO } from 'src/dto/signInUser.dto';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import { AuthService } from 'src/auth/auth.service';
 
 @Injectable()
 export class UsersService {
@@ -15,7 +16,8 @@ export class UsersService {
     @InjectModel(User.name) private userModel: Model<User>,
     @InjectModel('Image') private imageModel: Model<Image>,
     private jwtService: JwtService,
-    private readonly cloudinaryService: CloudinaryService
+    private readonly cloudinaryService: CloudinaryService,
+    private readonly authService: AuthService
   ) {}
 
   async createUser(createUserDTO: CreateUserDTO): Promise<User> {
@@ -35,7 +37,7 @@ export class UsersService {
     return 'here is the return'
 }
 
-async signIn(signInUserDTO: SignInUserDTO): Promise<{ retrivedUser: UserDocument; token: string }> {
+async signIn(signInUserDTO: SignInUserDTO): Promise<{ retrivedUser: UserDocument, accessToken: string, refreshToken : string}> {
   const { username, password } = signInUserDTO;
   const user = await this.userModel.findOne({ username }).exec();
   const isPasswordCorrect = await bcrypt.compare(password, user.password);
@@ -46,8 +48,14 @@ async signIn(signInUserDTO: SignInUserDTO): Promise<{ retrivedUser: UserDocument
 
   const retrivedUser = await this.userModel.findOne({ username }).select("-password").exec();
 
-  const token = await this.jwtService.signAsync({id: user._id});
-  return {retrivedUser, token};
+  const {accessToken, refreshToken} = await this.authService.generateTokens(user._id);
+
+  console.log(refreshToken)
+
+  user.refreshtoken = refreshToken;
+  await user.save();
+
+  return {retrivedUser, accessToken, refreshToken};
 }
 
 async upload(files: Express.Multer.File[], currentUser: UserDocument): Promise<any[]> {
@@ -56,7 +64,7 @@ async upload(files: Express.Multer.File[], currentUser: UserDocument): Promise<a
     const uploadedImage = await this.cloudinaryService.uploadImage(files[0].path);
     console.log(uploadedImage.url);
   }
-  
+
   if(files.length>1) {
   for (const file of files) {
     const uploadedImage = await this.cloudinaryService.uploadImage(file.path);
@@ -71,7 +79,7 @@ async upload(files: Express.Multer.File[], currentUser: UserDocument): Promise<a
   })
 
   await newImages.save();
-  return uploadResults; // Retu
+  return uploadResults;
 }
 
 async getImagesAll(): Promise<Image[]> {
@@ -114,4 +122,26 @@ async replaceEmailById(id: string, newEmail: string): Promise<any> {
   return images
 }
   
+
+
+async refreshTheToken(refresh_token: string) : Promise<{accessToken: string, refreshToken: string}> {
+  /* Checking is any user with the current refresh-token exists*/
+  const user = await this.userModel.findOne({refreshtoken: refresh_token});
+
+  if(!user) {
+    throw new Error("No User with this refresh token exists")
+  }
+
+  /*checking if the refresh-token is valid*/
+  const decoded = await this.authService.validateRefreshToken(refresh_token)
+  if (!decoded || decoded.id !== user._id.toString()) {
+    throw new UnauthorizedException('Invalid refresh token');
+  }
+  const { accessToken, refreshToken } = await this.authService.generateTokens(user._id);
+
+  /*saving new refresh-token*/
+  user.refreshtoken = refreshToken;
+  await user.save();
+  return { accessToken, refreshToken}
+  }
 }   

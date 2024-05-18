@@ -19,7 +19,7 @@ import { AuthModule } from './auth/auth.module';
     JwtModule.register({      
       global: true,
       secret: process.env.JWT_SECRET,
-      signOptions: { expiresIn: '1h' },}),
+    }),
     MulterModule.register({
       dest: './public'
     }),

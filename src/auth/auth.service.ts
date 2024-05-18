@@ -1,13 +1,37 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { Types } from 'mongoose'
 
 @Injectable()
 export class AuthService {
-    constructor(private readonly jwtServ: JwtService) {}
+    constructor(private readonly jwtService: JwtService) {}
     
-    validateToken(token: string) {
-        return this.jwtServ.verify(token, {
+    validateToken(accessToken: string) {
+        return this.jwtService.verify(accessToken, {
             secret : process.env.JWT_SECRET
         });
+    }   
+
+    async generateTokens(userId: Types.ObjectId) {
+        const payload = {id: userId}
+        const accessToken = this.jwtService.sign(payload, {
+            expiresIn: '1h'
+        })
+
+        const refreshToken = this.jwtService.sign(payload, {
+            expiresIn: '3h'
+        })
+        return {
+            accessToken,
+            refreshToken
+        };
     }
+
+        validateRefreshToken(refreshToken: string) {
+            return this.jwtService.verify(refreshToken, {
+                secret : process.env.JWT_SECRET
+            });
+        }   
+
+
 }
