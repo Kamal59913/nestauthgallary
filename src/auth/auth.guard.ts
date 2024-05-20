@@ -1,6 +1,6 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException, 
-    ForbiddenException,} from '@nestjs/common';
-    import { AuthService } from './auth.service';
+ForbiddenException,} from '@nestjs/common';
+import { AuthService } from './auth.service';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from 'src/schemas/users.schema';
 import { Model } from 'mongoose';
@@ -18,8 +18,8 @@ import { Model } from 'mongoose';
             if (!accessToken) {
               throw new UnauthorizedException('Please provide token');
             }
-            const resp = await this.authService.validateToken(accessToken);
-            const userId = resp.id
+            const uncoded = await this.authService.validateToken(accessToken);
+            const userId = uncoded.id
             const findUser = await this.userModel.findById(userId).select("-password").exec()
 
             request.user = findUser;

@@ -10,14 +10,15 @@ import { AuthGuard } from 'src/auth/auth.guard';
 export class UsersController {
    constructor(private readonly userService: UsersService) { }
    
+
    @Post('signup')
    async createUser(@Res() response: any, @Body() creatUserDto: CreateUserDTO) {
    try {
     const newUser = await this.userService.createUser(creatUserDto);
     return response.status(HttpStatus.CREATED).json({
     message: 'User has been created successfully',
-    newUser,});
- } catch (err) {
+    newUser });
+  } catch (err) {
     return response.status(HttpStatus.BAD_REQUEST).json({
     statusCode: 400,
     message: 'Error: User not created!',

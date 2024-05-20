@@ -19,7 +19,7 @@ export class AuthService {
         })
 
         const refreshToken = this.jwtService.sign(payload, {
-            expiresIn: '3h'
+            expiresIn: '1d'
         })
         return {
             accessToken,
