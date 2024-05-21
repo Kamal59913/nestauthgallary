@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { UploadApiErrorResponse, UploadApiResponse, v2 } from 'cloudinary';
+import * as sharp from 'sharp';
 
 @Injectable()
 export class CloudinaryService {
@@ -14,8 +15,11 @@ export class CloudinaryService {
     filePath: string,
   ): Promise<UploadApiResponse | UploadApiErrorResponse> {
     
+    console.log()
+
     return new Promise((resolve, reject) => {
       const upload = v2.uploader.upload(filePath, { folder: 'newFolder'}, (error, result) => {
+
         if (error) return reject(error);
         resolve(result);
       });

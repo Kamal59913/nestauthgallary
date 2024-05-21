@@ -14,6 +14,7 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager'; /* cache manager */
 import { Cache } from 'cache-manager';
 
 
+
 @Injectable()
 export class UsersService {
   constructor(
@@ -73,6 +74,8 @@ async upload(files: Express.Multer.File[], currentUser: UserDocument): Promise<a
 
   if(files.length>1) {
   for (const file of files) {
+
+    
     console.log(file.path)
     const uploadedImage = await this.cloudinaryService.uploadImage(file.path);
     console.log(uploadedImage.url);
