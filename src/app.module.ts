@@ -9,10 +9,24 @@ import { MulterModule } from '@nestjs/platform-express'; /*multer middleware*/
 import { AuthModule } from './auth/auth.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import { redisStore } from 'cache-manager-redis-yet';  
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 
 
 @Module({
   imports: [
+    ThrottlerModule.forRoot([
+      {
+        name: 'login',
+        ttl: 60000,
+        limit: 3,
+      },
+      {
+        name: 'getallusers',
+        ttl: 60000,
+        limit: 100
+      },
+  ]),
     ConfigModule.forRoot({
       envFilePath: '.env',
       isGlobal: true,
@@ -38,9 +52,14 @@ import { redisStore } from 'cache-manager-redis-yet';
         }),     
       }),    
     }),    
-    ],
-
+  ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard
+    }
+    
+  ],
 })
 export class AppModule {}

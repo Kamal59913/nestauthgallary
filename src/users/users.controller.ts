@@ -7,6 +7,7 @@ import { diskStorage } from 'multer';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { CACHE_MANAGER, CacheInterceptor, CacheKey, CacheTTL } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager'
+import { SkipThrottle, Throttle } from '@nestjs/throttler';
 
 @Controller('users')
 export class UsersController {
@@ -29,7 +30,6 @@ export class UsersController {
  });
 }
 }
-
 
 @Post('login')
 async signIn(@Res() response: any, @Body() signInUserDTO: SignInUserDTO) {
@@ -95,6 +95,7 @@ try {
   return this.userService.upload(fileArray, currentUser);
 }
 
+// @Throttle()
 @Get('getimages')
 async getAllImages(@Res() response: any) {
   try {

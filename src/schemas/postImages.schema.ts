@@ -3,11 +3,20 @@ import { Document, Schema as MongooseSchema } from 'mongoose';
 
 export type ImageDocument = Image & Document;
 
-
 @Schema()
 export class Image {
-  @Prop({type: [String]})
-  images: string[];
+  @Prop()
+  images: [{
+    width: string;
+    height: string;
+    format: string;
+    resource_type: string;
+    created_at: string;
+    type: string;
+    original_filename: string;
+    url: string;
+    bytes: string;
+  }];
 
   @Prop({ type: Date, default: Date.now, index: true })
   uploadDate: Date;

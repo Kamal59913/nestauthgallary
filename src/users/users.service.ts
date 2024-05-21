@@ -65,28 +65,34 @@ async signIn(signInUserDTO: SignInUserDTO): Promise<{ retrivedUser: UserDocument
 }
 
 async upload(files: Express.Multer.File[], currentUser: UserDocument): Promise<any[]> {
-  console.log(typeof files, files)
+  console.log(typeof files, files);
   const uploadResults = [];
-  if (files.length == 1) {
-    const uploadedImage = await this.cloudinaryService.uploadImage(files[0].path);
-    console.log(uploadedImage.url);
-  }
 
-  if(files.length>1) {
   for (const file of files) {
-
-    
-    console.log(file.path)
     const uploadedImage = await this.cloudinaryService.uploadImage(file.path);
     console.log(uploadedImage.url);
-    uploadResults.push(uploadedImage.url);
+
+    const imageResult = {
+      width: uploadedImage.width.toString(),
+      height: uploadedImage.height.toString(),
+      format: uploadedImage.format.toString(),
+      resource_type: uploadedImage.resource_type.toString(),
+      created_at: uploadedImage.created_at.toString(),
+      type: uploadedImage.type.toString(),
+      original_filename: uploadedImage.original_filename.toString(),
+      url: uploadedImage.url.toString(),
+      bytes: uploadedImage.bytes.toString(),
+    };
+
+    uploadResults.push(imageResult);
   }
-}
+
+  console.log("here ir is",uploadResults)
 
   const newImages = new this.imageModel({
     images: uploadResults,
-    uploaderId: currentUser._id
-  })
+    uploaderId: currentUser._id,
+  });
 
   await newImages.save();
   return uploadResults;
