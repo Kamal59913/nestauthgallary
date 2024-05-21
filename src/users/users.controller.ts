@@ -1,16 +1,19 @@
-import { Body, Controller, Delete, Get, HttpStatus, Param, Patch, Post, Put, Req, Res, UploadedFile, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpStatus, Inject, Param, Patch, Post, Req, Res, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
 import { CreateUserDTO } from 'src/dto/createUser.dto';
-import { SignInUserDTO } from 'src/dto/signInUser.dto'
+import { SignInUserDTO } from 'src/dto/signInUser.dto';
 import { UsersService } from './users.service';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer'
+import { diskStorage } from 'multer';
 import { AuthGuard } from 'src/auth/auth.guard';
+import { CACHE_MANAGER, CacheInterceptor, CacheKey, CacheTTL } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager'
 
 @Controller('users')
 export class UsersController {
-   constructor(private readonly userService: UsersService) { }
+   constructor(private readonly userService: UsersService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache /* for automatically caching it*/
+   ) { }
    
-
    @Post('signup')
    async createUser(@Res() response: any, @Body() creatUserDto: CreateUserDTO) {
    try {
@@ -92,20 +95,30 @@ try {
   return this.userService.upload(fileArray, currentUser);
 }
 
-
 @Get('getimages')
 async getAllImages(@Res() response: any) {
   try {
-    const images = await this.userService.getImagesAll();
-    return response.status(HttpStatus.OK).json({
-      images
-    })
+    const cachedData = await this.cacheManager.get('nestjsimageauth');
+    if (cachedData) {
+      console.log('Data retrieved from cache');
+      return response.status(HttpStatus.OK).json({
+        images: cachedData
+      });
+    } else {
+      console.log('Data retrieved from database and now cached');
+      const images = await this.userService.getImagesAll();
+      await this.cacheManager.set('nestjsimageauth', images);
+      return response.status(HttpStatus.OK).json({
+        images
+      });
+  }
+
   } catch (error) {
    return response.json({
     message: "an error occured while retreiving images"
    }) 
   }
-  }
+}
 
 @Get('uploadedAnHourAgo') 
 async uploadedHourAgo(@Res() response: any) {

@@ -1,5 +1,5 @@
 import { Model } from 'mongoose';
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { User, UserDocument } from 'src/schemas/users.schema';
 import { Image, ImageDocument } from 'src/schemas/postImages.schema';
@@ -10,11 +10,16 @@ import * as bcrypt from 'bcrypt';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { AuthService } from 'src/auth/auth.service';
 
+import { CACHE_MANAGER } from '@nestjs/cache-manager'; /* cache manager */
+import { Cache } from 'cache-manager';
+
+
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
     @InjectModel('Image') private imageModel: Model<Image>,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache, 
     private jwtService: JwtService,
     private readonly cloudinaryService: CloudinaryService,
     private readonly authService: AuthService
@@ -85,11 +90,20 @@ async upload(files: Express.Multer.File[], currentUser: UserDocument): Promise<a
 }
 
 async getImagesAll(): Promise<Image[]> {
-    return this.imageModel.find().populate({
-      path: 'uploaderId',
-      select: '-password',
-      model: this.userModel
-    }).select("-password").exec();
+
+  const images = await this.imageModel.find().populate({
+    path: 'uploaderId',
+    select: '-password',
+    model: this.userModel
+  }).select("-password").exec();
+
+  const cachedImages = await this.cacheManager.set('nestjsimageauth',images, 20)
+    // Manually set TTL using Redis specific parameters
+  console.log(cachedImages)
+
+  const cachedData = await this.cacheManager.get('nestjsimageauth')
+
+  return images;
   }
 
   async uploadedHourAgo(): Promise<any> {
