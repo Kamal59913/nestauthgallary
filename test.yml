@@ -1,0 +1,19 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    - duration: 60
+      arrivalRate: 10
+  payload:
+    path: "MOCK_DATA_IMG.csv"
+    fields:
+      - "image_path_1"
+      - "image_path_2"
+scenarios:
+  - flow:
+    - post:
+        url: "/users/images"
+        headers: 
+          Cookie: 'accessToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY2NGI3ODkxZDJmM2Q4OGM3ZmU4YmFlMCIsImlhdCI6MTcxNjI3MTk2NiwiZXhwIjoxNzE2Mjc1NTY2fQ.tJR-SxwsJhgQxGgmx7plHK4NJrwSg1c7IeUW8mAwqYU'
+        formData:
+          files: 
+            path: "-image_path_1-"

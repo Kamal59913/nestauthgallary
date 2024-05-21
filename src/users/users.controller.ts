@@ -40,6 +40,7 @@ try {
  retrivedUser,});
 } catch (err) {
  return response.status(HttpStatus.BAD_REQUEST).json({
+  
  statusCode: 400,
  message: 'Error: Unable to login user',
  error: 'Bad Request'

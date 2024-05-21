@@ -59,6 +59,7 @@ async signIn(signInUserDTO: SignInUserDTO): Promise<{ retrivedUser: UserDocument
 }
 
 async upload(files: Express.Multer.File[], currentUser: UserDocument): Promise<any[]> {
+  console.log(typeof files, files)
   const uploadResults = [];
   if (files.length == 1) {
     const uploadedImage = await this.cloudinaryService.uploadImage(files[0].path);
@@ -67,6 +68,7 @@ async upload(files: Express.Multer.File[], currentUser: UserDocument): Promise<a
 
   if(files.length>1) {
   for (const file of files) {
+    console.log(file.path)
     const uploadedImage = await this.cloudinaryService.uploadImage(file.path);
     console.log(uploadedImage.url);
     uploadResults.push(uploadedImage.url);
